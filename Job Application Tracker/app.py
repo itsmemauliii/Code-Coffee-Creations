@@ -12,7 +12,7 @@ if 'job_data' not in st.session_state:
 
 st.set_page_config(page_title="Job Application Tracker", layout="wide")
 
-st.title("📌 Job Application Tracker")
+st.title("👩🏻‍🎓 Job Application Tracker")
 st.markdown("Keep track of every job you apply to and stay organized during your job hunt!")
 
 # Form to input new job application
@@ -50,7 +50,7 @@ with st.form("job_form"):
             st.success("Application added!")
 
 # Dashboard
-st.subheader("📊 Your Application Dashboard")
+st.subheader("💻 Your Application Dashboard")
 if not st.session_state.job_data.empty:
     df = st.session_state.job_data
     st.dataframe(df)
