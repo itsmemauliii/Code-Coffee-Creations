@@ -5,6 +5,9 @@ from oauth2client.service_account import ServiceAccountCredentials
 import requests
 import datetime
 import uuid
+import sys
+st.write(sys.executable)
+
 
 # --------- GOOGLE SHEETS SETUP ---------
 SCOPE = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
