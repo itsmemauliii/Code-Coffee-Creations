@@ -1,52 +1,85 @@
 import streamlit as st
+import pandas as pd
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-from notion_client import Client
-from datetime import datetime
+import requests
+import datetime
+import uuid
 
-# Google Sheets setup
-scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-creds = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", scope)
-client = gspread.authorize(creds)
-sheet = client.open("JobTracker").sheet1  # Your Google Sheet name
+# --------- GOOGLE SHEETS SETUP ---------
+SCOPE = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+CREDS_FILE = "credentials.json"
+SHEET_NAME = "Job Tracker"
 
-# Notion setup
-notion = Client(auth="your_notion_secret_api_key")  # Replace with your Notion API key
-notion_database_id = "your_database_id"  # Replace with your Notion database ID
+def get_google_sheet():
+    creds = ServiceAccountCredentials.from_json_keyfile_name(CREDS_FILE, SCOPE)
+    client = gspread.authorize(creds)
+    sheet = client.open_by_url("https://docs.google.com/spreadsheets/d/1_lqAUNnS_GsXiKmN0fH4G-bOJzkp83HjhwVu5Q46kFY/edit")
+    worksheet = sheet.get_worksheet(0)
+    return worksheet
 
-# Function to append data to Google Sheets
-def append_to_google_sheets(job_title, company, platform, status, notes):
-    date = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    sheet.append_row([date, job_title, company, platform, status, notes])
+def append_to_google_sheet(data):
+    sheet = get_google_sheet()
+    sheet.append_row(data)
 
-# Function to append data to Notion
-def append_to_notion(job_title, company, platform, status, notes):
-    notion.pages.create(
-        parent={"database_id": notion_database_id},
-        properties={
-            "Job Title": {"title": [{"text": {"content": job_title}}]},
-            "Company": {"rich_text": [{"text": {"content": company}}]},
-            "Platform": {"select": {"name": platform}},
-            "Status": {"select": {"name": status}},
-            "Notes": {"rich_text": [{"text": {"content": notes}}]},
-            "Date": {"date": {"start": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}}
+# --------- NOTION SETUP ---------
+NOTION_DB_ID = "1ee4d7d0503f8047b956e9aa88c09b99"
+NOTION_API_KEY = st.secrets["NOTION_API_KEY"]
+
+def append_to_notion(job_data):
+    url = "https://api.notion.com/v1/pages"
+    headers = {
+        "Authorization": f"Bearer {NOTION_API_KEY}",
+        "Content-Type": "application/json",
+        "Notion-Version": "2022-06-28"
+    }
+    payload = {
+        "parent": { "database_id": NOTION_DB_ID },
+        "properties": {
+            "Job Title": { "title": [{ "text": { "content": job_data["title"] }}]},
+            "Company": { "rich_text": [{ "text": { "content": job_data["company"] }}]},
+            "Platform": { "rich_text": [{ "text": { "content": job_data["platform"] }}]},
+            "Status": { "select": { "name": job_data["status"] }},
+            "Notes": { "rich_text": [{ "text": { "content": job_data["notes"] }}]},
+            "Date": { "date": { "start": job_data["date"] }}
         }
-    )
+    }
+    response = requests.post(url, headers=headers, json=payload)
+    return response.status_code == 200
 
-# Streamlit form to collect job application data
-with st.form("job_application_form"):
-    job_title = st.text_input("Job Title")
-    company = st.text_input("Company")
-    platform = st.selectbox("Platform", ["LinkedIn", "Company Website", "Indeed", "Other"])
+# --------- STREAMLIT UI ---------
+st.set_page_config(page_title="Job Tracker", page_icon="📌")
+st.title("🧭 Job Application Tracker")
+
+with st.form("job_form"):
+    col1, col2 = st.columns(2)
+    title = col1.text_input("Job Title")
+    company = col2.text_input("Company Name")
+    platform = st.selectbox("Platform", ["LinkedIn", "Company Website", "Indeed", "Naukri", "Other"])
     status = st.selectbox("Status", ["Applied", "Interviewing", "Rejected", "Offer"])
     notes = st.text_area("Notes")
-    submit_button = st.form_submit_button("Submit")
+    submit = st.form_submit_button("Add Application")
 
-    if submit_button:
-        # Add job data to Google Sheets
-        append_to_google_sheets(job_title, company, platform, status, notes)
-        st.success("Job application added to Google Sheets!")
+if submit:
+    today = datetime.datetime.today().strftime('%Y-%m-%d')
+    google_data = [today, title, company, platform, status, notes]
 
-        # Add job data to Notion
-        append_to_notion(job_title, company, platform, status, notes)
-        st.success("Job application added to Notion!")
+    # Append to Google Sheets
+    append_to_google_sheet(google_data)
+
+    # Append to Notion
+    notion_data = {
+        "title": title,
+        "company": company,
+        "platform": platform,
+        "status": status,
+        "notes": notes,
+        "date": today
+    }
+    success = append_to_notion(notion_data)
+
+    if success:
+        st.success("✅ Application logged in Notion and Google Sheets!")
+    else:
+        st.error("⚠️ Failed to log to Notion. Please check your API key and database.")
+
