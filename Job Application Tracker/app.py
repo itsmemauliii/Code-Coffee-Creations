@@ -8,12 +8,10 @@ from datetime import datetime
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
 creds = ServiceAccountCredentials.from_json_keyfile_name("credentials.json", scope)
 client = gspread.authorize(creds)
-
-# Open the Google Sheet
-sheet = client.open("JobTracker").sheet1  # Replace with your sheet name
+sheet = client.open("JobTracker").sheet1  # Your Google Sheet name
 
 # Notion setup
-notion = Client(auth="your_notion_secret_api_key")  # Replace with your Notion secret API key
+notion = Client(auth="your_notion_secret_api_key")  # Replace with your Notion API key
 notion_database_id = "your_database_id"  # Replace with your Notion database ID
 
 # Function to append data to Google Sheets
@@ -52,4 +50,3 @@ with st.form("job_application_form"):
         # Add job data to Notion
         append_to_notion(job_title, company, platform, status, notes)
         st.success("Job application added to Notion!")
-
