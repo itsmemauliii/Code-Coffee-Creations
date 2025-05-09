@@ -6,12 +6,9 @@ import requests
 import datetime
 import uuid
 import sys
-import pandas as pd
 
-print(sys.executable)  # This prints the Python environment being used.
-print(pd.__version__)  # This will print the version of pandas installed.
-
-
+print(sys.executable)
+print(pd.__version__)
 
 # --------- GOOGLE SHEETS SETUP ---------
 SCOPE = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
