@@ -18,7 +18,7 @@ SHEET_NAME = "Job Tracker"
 def get_google_sheet():
     creds = ServiceAccountCredentials.from_json_keyfile_name(CREDS_FILE, SCOPE)
     client = gspread.authorize(creds)
-    sheet = client.open_by_url("https://docs.google.com/spreadsheets/d/1_lqAUNnS_GsXiKmN0fH4G-bOJzkp83HjhwVu5Q46kFY/edit")
+    sheet = client.open_by_url("https://docs.google.com/spreadsheets/d/1_lqAUNnS_GsXiKmN0fH4G-bOJzkp83HjhwVu5Q46kFY/edit?gid=0#gid=0")
     worksheet = sheet.get_worksheet(0)
     return worksheet
 
