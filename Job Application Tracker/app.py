@@ -6,7 +6,11 @@ import requests
 import datetime
 import uuid
 import sys
-st.write(sys.executable)
+import pandas as pd
+
+print(sys.executable)  # This prints the Python environment being used.
+print(pd.__version__)  # This will print the version of pandas installed.
+
 
 
 # --------- GOOGLE SHEETS SETUP ---------
