@@ -19,33 +19,44 @@ def get_google_sheet():
     return worksheet
 
 def append_to_google_sheet(data):
-    sheet = get_google_sheet()
-    sheet.append_row(data)
+    try:
+        sheet = get_google_sheet()
+        sheet.append_row(data)
+    except Exception as e:
+        st.error(f"⚠️ Google Sheets Error: {e}")
 
 # --------- NOTION SETUP ---------
 NOTION_DB_ID = "1ee4d7d0503f8047b956e9aa88c09b99"
 NOTION_API_KEY = st.secrets["NOTION_API_KEY"]
 
 def append_to_notion(job_data):
-    url = "https://api.notion.com/v1/pages"
-    headers = {
-        "Authorization": f"Bearer {NOTION_API_KEY}",
-        "Content-Type": "application/json",
-        "Notion-Version": "2022-06-28"
-    }
-    payload = {
-        "parent": { "database_id": NOTION_DB_ID },
-        "properties": {
-            "Job Title": { "title": [{ "text": { "content": job_data["title"] }}]},
-            "Company": { "rich_text": [{ "text": { "content": job_data["company"] }}]},
-            "Platform": { "rich_text": [{ "text": { "content": job_data["platform"] }}]},
-            "Status": { "select": { "name": job_data["status"] }},
-            "Notes": { "rich_text": [{ "text": { "content": job_data["notes"] }}]},
-            "Date": { "date": { "start": job_data["date"] }}
+    try:
+        url = "https://api.notion.com/v1/pages"
+        headers = {
+            "Authorization": f"Bearer {NOTION_API_KEY}",
+            "Content-Type": "application/json",
+            "Notion-Version": "2022-06-28"
         }
-    }
-    response = requests.post(url, headers=headers, json=payload)
-    return response.status_code == 200
+        payload = {
+            "parent": { "database_id": NOTION_DB_ID },
+            "properties": {
+                "Job Title": { "title": [{ "text": { "content": job_data["title"] }}]},
+                "Company": { "rich_text": [{ "text": { "content": job_data["company"] }}]},
+                "Platform": { "rich_text": [{ "text": { "content": job_data["platform"] }}]},
+                "Status": { "select": { "name": job_data["status"] }},
+                "Notes": { "rich_text": [{ "text": { "content": job_data["notes"] }}]},
+                "Date": { "date": { "start": job_data["date"] }}
+            }
+        }
+        response = requests.post(url, headers=headers, json=payload)
+        if response.status_code == 200:
+            return True
+        else:
+            st.error(f"⚠️ Notion Error: {response.status_code} - {response.text}")
+            return False
+    except Exception as e:
+        st.error(f"⚠️ Notion API Error: {e}")
+        return False
 
 # --------- STREAMLIT UI ---------
 st.set_page_config(page_title="Job Tracker", page_icon="📌")
@@ -82,4 +93,3 @@ if submit:
         st.success("✅ Application logged in Notion and Google Sheets!")
     else:
         st.error("⚠️ Failed to log to Notion. Please check your API key and database.")
-
