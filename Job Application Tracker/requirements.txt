@@ -2,4 +2,6 @@ streamlit
 pandas
 gspread
 oauth2client
+requests
 notion-client
+python-dotenv
